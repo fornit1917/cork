@@ -37,11 +37,34 @@ target_include_directories(cork-bin PRIVATE ${INCLUDEDIRS})
 
 set_target_properties(cork-bin PROPERTIES OUTPUT_NAME cork)
 
-find_package(GMP REQUIRED)
+if (WIN32)
+  find_package(MPIR REQUIRED)
+  target_link_libraries(cork PUBLIC ${MPIR_LIBRARIES})
+  target_include_directories(cork PUBLIC ${MPIR_INCLUDES})
+else()
+  find_package(GMP REQUIRED)
+  target_link_libraries(cork PUBLIC ${GMP_LIBRARIES})
+  target_include_directories(cork PUBLIC ${GMP_INCLUDES})
+endif()
 
-target_link_libraries(cork PUBLIC ${GMP_LIBRARIES})
-target_include_directories(cork PUBLIC ${GMP_INCLUDES})
-target_compile_definitions(cork PRIVATE
-  -DNO_TIMER -DREDUCED -DCDT_ONLY -DTRILIBRARY -DANSI_DECLARATORS)
+if (MSVC)
+  target_compile_definitions(cork PRIVATE
+    -DNO_TIMER -DREDUCED -DCDT_ONLY -DTRILIBRARY -DANSI_DECLARATORS -DNOMINMAX -D_USE_MATH_DEFINES)
+  target_compile_definitions(cork-bin PRIVATE -DNOMINMAX -D_USE_MATH_DEFINES)
+  target_link_libraries(cork-bin PRIVATE cork)
+else()
+  target_compile_definitions(cork PRIVATE
+    -DNO_TIMER -DREDUCED -DCDT_ONLY -DTRILIBRARY -DANSI_DECLARATORS)
+  target_link_libraries(cork-bin PRIVATE cork)
+endif()
 
-target_link_libraries(cork-bin PRIVATE cork)
+macro(print_all_variables)
+    message(STATUS "print_all_variables------------------------------------------{")
+    get_cmake_property(_variableNames VARIABLES)
+    foreach (_variableName ${_variableNames})
+        message(STATUS "${_variableName}=${${_variableName}}")
+    endforeach()
+    message(STATUS "print_all_variables------------------------------------------}")
+endmacro()
+
+print_all_variables()
